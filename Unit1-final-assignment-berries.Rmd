@@ -1,0 +1,107 @@
+---
+title: "Unit1 Final Assignment Berries"
+author: "Hao Shen"
+date: "2020/10/17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# Summary
+
+# Data cleaning
+
+## Select columns with useful information
+```{R "Column Selection"}
+berries=read.csv('berries.csv')
+b_berry=filter(berries,Commodity=='BLUEBERRIES')
+b_berry=select(b_berry,
+               -Program,
+               -(Period:Geo.Level),
+               -(State.ANSI:Watershed),
+               -CV....)
+```
+
+## Separate 'b_berry' into two tables
+```{R "Separate 'b_berry' into two tables"}
+#write.csv(b_berry,'b_berry.csv',row.names=F)
+#unique(b_berry$Data.Item)
+b_berry_bearing=b_berry[str_detect(b_berry$Data.Item,'BEARING'),]
+b_berry_market=b_berry[str_detect(b_berry$Data.Item,'TAME')|
+                         str_detect(b_berry$Data.Item,'WILD'),]
+b_berry_market$TAME[str_detect(b_berry_market$Data.Item,'TAME')]=1
+b_berry_market$TAME[str_detect(b_berry_market$Data.Item,'WILD')]=0
+```
+
+## Create sub-table 'b_berry_bearing'
+```{R "Separate 'Data.Item' of 'Bearing'"}
+#unique(b_berry_bearing$Data.Item)
+b_berry_bearing$Data.Item=str_replace_all(b_berry_bearing$Data.Item,
+                                          c('BLUEBERRIES, BEARING - '='',
+                                            ', MEASURED IN '='#'))
+b_berry_bearing=separate(b_berry_bearing,Data.Item,c('Measurement','Unit'),'#')
+```
+
+```{R "Separate 'b_berry_bearing' into two tables"}
+#unique(b_berry_bearing$Domain)
+b_berry_chemical=b_berry_bearing[
+  str_detect(b_berry_bearing$Domain,'CHEMICAL'),]
+b_berry_fertilizer=b_berry_bearing[
+  str_detect(b_berry_bearing$Domain,'FERTILIZER'),]
+```
+
+### Create sub-table 'b_berry_chemical'
+```{R "Separate 'Domain.Category' of 'b_berry_chemical'"}
+b_berry_chemical=select(b_berry_chemical,-Domain)
+#unique(b_berry_chemical$Domain.Category)
+b_berry_chemical$Domain.Category=str_replace_all(b_berry_chemical$Domain.Category,
+                                                 c('CHEMICAL, '='',
+                                                   ': '='#'))
+b_berry_chemical=separate(b_berry_chemical,Domain.Category,c('Domain','Category'),'#')
+```
+
+### Create sub-table 'b_berry_fertilizer'
+```{R "Separate 'Domain.Category' of 'b_berry_fertilizer'"}
+b_berry_fertilizer=select(b_berry_fertilizer,-Domain)
+#unique(b_berry_fertilizer$Domain.Category)
+b_berry_fertilizer=separate(b_berry_fertilizer,Domain.Category,c('Domain','Category'),': ')
+#b_berry_fertilizer$Domain.Category=str_replace_all(b_berry_fertilizer$Domain.Category,
+#                                                 c('FERTILIZER: '=''))
+#names(b_berry_fertilizer)[names(b_berry_fertilizer)=='Domain.Category']='Category'
+```
+
+### Form new 'b_berry_bearing'
+```{R "Form new 'b_berry_bearing'"}
+b_berry_bearing=rbind(b_berry_chemical,b_berry_fertilizer)
+```
+
+## Create sub-table 'b_berry_market'
+```{R "Separate 'Data.Item' of 'b_berry_market'"}
+b_berry_market=select(b_berry_market,-Domain,-Domain.Category)
+#unique(b_berry_market$Data.Item)
+b_berry_market$Data.Item=str_replace_all(b_berry_market$Data.Item,
+                                       c('BLUEBERRIES, TAME'='#',
+                                         'BLUEBERRIES, WILD'='#',
+                                         ', MEASURED IN '='#'))
+b_berry_market$Data.Item=str_replace_all(b_berry_market$Data.Item,
+                                       c('# - '='',
+                                         '#, '=''))
+b_berry_market=separate(b_berry_market,Data.Item,c('Measurement','Unit'),'#')
+#b_berry_market[is.na(b_berry_market$Unit),]
+b_berry_market$Unit[is.na(b_berry_market$Unit)]='ACRE'
+```
+
+## Remove useless b_berries and save data
+```{R "Remove useless b_berries"}
+rm(b_berry_fertilizer,b_berry_chemical)
+write.csv(b_berry_bearing,"b_berry_bearing.csv",row.names=F)
+write.csv(b_berry_market,"b_berry_market.csv",row.names=F)
+```
+
+# EDA for 'b_berry_bearing'
+```{r}
+```
+# EDA for 'b_berry_market'
