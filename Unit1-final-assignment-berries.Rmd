@@ -68,9 +68,6 @@ b_berry_chemical=separate(b_berry_chemical,Domain.Category,c('Domain','Category'
 b_berry_fertilizer=select(b_berry_fertilizer,-Domain)
 #unique(b_berry_fertilizer$Domain.Category)
 b_berry_fertilizer=separate(b_berry_fertilizer,Domain.Category,c('Domain','Category'),': ')
-#b_berry_fertilizer$Domain.Category=str_replace_all(b_berry_fertilizer$Domain.Category,
-#                                                 c('FERTILIZER: '=''))
-#names(b_berry_fertilizer)[names(b_berry_fertilizer)=='Domain.Category']='Category'
 ```
 
 ### Form new 'b_berry_bearing'
@@ -97,11 +94,29 @@ b_berry_market$Unit[is.na(b_berry_market$Unit)]='ACRE'
 ## Remove useless b_berries and save data
 ```{R "Remove useless b_berries"}
 rm(b_berry_fertilizer,b_berry_chemical)
-write.csv(b_berry_bearing,"b_berry_bearing.csv",row.names=F)
-write.csv(b_berry_market,"b_berry_market.csv",row.names=F)
+write.csv(b_berry_bearing,"Shiny/b_berry_bearing.csv",row.names=F)
+write.csv(b_berry_market,"Shiny/b_berry_market.csv",row.names=F)
 ```
 
-# EDA for 'b_berry_bearing'
+# EDA for 'bearing'
 ```{r}
+bearing=read.csv('b_berry_bearing.csv')
+market=read.csv('b_berry_market.csv')
+head(bearing)
+bearing_value=filter(bearing,Value!=' (NA)'&Value!=' (D)')
 ```
-# EDA for 'b_berry_market'
+
+```{r}
+(b_domain=unique(bearing$Domain))
+unique(filter(bearing,Domain==b_domain[1])$Year)
+unique(filter(bearing,Domain==b_domain[2])$Year)
+unique(filter(bearing,Domain==b_domain[3])$Year)
+unique(filter(bearing,Domain==b_domain[4])$Year)
+unique(filter(bearing,Domain==b_domain[5])$Year)
+```
+# EDA for 'market'
+```{R}
+market=filter(market,Measurement!='NOT HARVESTED - PRODUCTION')
+index_measure=data.frame(No=1:nrow(unique(select(market,Measurement,Unit))),
+                         unique(select(market,Measurement,Unit)))
+```
