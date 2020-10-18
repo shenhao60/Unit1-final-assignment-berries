@@ -1,5 +1,6 @@
-library(tidyverse)
 library(shiny)
+library(tidyverse)
+library(ggpubr)
 # load data
 bearing=read.csv('b_berry_bearing.csv')
 market=read.csv('b_berry_market.csv')
