@@ -1,2 +1,10 @@
-# Unit1-final-assignment-berries
- As discussed in class, we're going to wrap up Unit 1 by completing the berry assignment. Keep in mind that this assignment combines data cleaning, data organization, and EDA -- which is how it generally happens.  You may use either of the red berries for the assignment. Finish cleaning and organizing the data. Visualize and explore the data. Prepare a report, a presentation, and a shiny application describing what you did and what you learned. Using markdown (perhaps with some additional LaTeX aour shiny app on shinyapps.io. To provide a focus for the deliverables, imagine that you are cleaning, organizing, and exploring the dataset before releasing it to an agricultural research team for analysis and modeling.  I think this project should be doable by next Friday, Oct 16th  Monday, Oct 19, 0800 Boston Time . Turn in your work by submitting the URLs for your GitHub and your published shiny app. It is your responsibility to put appropriate citations in your documents, presentations, and shiny apps. These citations should include acknowledgment of any help you have received while completing the assignment. No matter how much help you get, the work you submit must be your work, which means you can explain your code and results. The TAs and I will grade the projects and, time permitting, class presentations.
+In this assignment, we do EAD for data set berries from USDA. In data cleaning process, we mainly separate mixed stings into several variables and delete variables with meaningless or replicated information. Then, according to data set attributions, we divided the whole date set into two parts:
+
+* Bearing: a part contains information about farm chemical and fertilizer usage on berries.
+* Market: a part with price, yield, area related information about berries.
+
+For Bearing part, we use principal component analysis to explore variables' internal relationship and the results shows the PCA will not help a lot in regression.
+
+For Market part, since the relationships between variables are extremely simple, we summarize 13 equations to explain their connections.
+
+Besides, we deploy a shiny app [Berries-shiny](https://haoshen.shinyapps.io/Berries-shiny/) for data display and a slide [Berries-slide](Berries-slide.pdf) to presente the results. And the document recored the whole processes is in [Berries-rmd](Berries-rmd.pdf).

@@ -14,7 +14,16 @@ library(tidyverse)
 
 # 1 Summary
 
-In this assignment, we 
+In this assignment, we do EAD for data set berries from USDA. In data cleaning process, we mainly separate mixed stings into several variables and delete variables with meaningless or replicated information. Then, according to data set attributions, we divided the whole date set into two parts:
+
+* Bearing: a part contains information about farm chemical and fertilizer usage on berries.
+* Market: a part with price, yield, area related information about berries.
+
+For Bearing part, we use principal component analysis to explore variables' internal relationship and the results shows the PCA will not help a lot in regression.
+
+For Market part, since the relationships between variables are extremely simple, we summarize 13 equations to explain their connections.
+
+Besides, we deploy a shiny app [Berries-shiny](https://haoshen.shinyapps.io/Berries-shiny/) for data display and a slide [Berries-slide](Berries-slide.pdf) to presente the results.
 
 # 2 Data cleaning
 
@@ -233,13 +242,24 @@ market_value=filter(market,
 market_value=select(market_value,-Commodity,-TAME)
 market_value=arrange(market_value,market_value[,3])
 (market_value=data.frame(No.=1:nrow(market_value),market_value))
+write.csv(market_value,'1.csv')
 ```
 
-So, here there are 6 equations to explain there relationships:
+So, here there are 13 equations to explain there relationships:
 
-* PRODUCTION_(LB) = YIELD_(LB/ACRE) * ACRES_HARVESTED_(ACRE)
-* 
-
+*   Row1    =   Row10   /   Row13
+*   Row2    =   Row3    /   Row4
+*   Row3    =   Row2    *   Row4
+*   Row4    =   Row3    /   Row2
+*   Row5    =   Row10   -   Row12
+*   Row6    =   Row11   /   Row12
+*   Row7    =   Row8    /   Row9
+*   Row8    =   Row7    *   Row9
+*   Row9    =   Row8    /   Row7
+*   Row10   =   Row5    +   Row12
+*   Row11   =   Row6    *   Row12
+*   Row12   =   Row4    +   Row9
+*   Row13   =   Row10   /   Row1
 
 # 5 Create Shiny
 
