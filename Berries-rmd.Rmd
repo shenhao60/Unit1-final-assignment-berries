@@ -2,7 +2,9 @@
 title: "Unit1 Final Assignment Berries"
 author: "Hao Shen"
 date: "2020/10/17"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -12,11 +14,11 @@ library(tidyverse)
 
 # 1 Summary
 
-
+In this assignment, we 
 
 # 2 Data cleaning
 
-After initially rough observation of the berries data set downloaded from USDA, we can find it generally consisted by two parts: 
+After initially rough observation of the berries data set downloaded from USDA [<sup>1</sup>](#refer-anchor-1) , we can find it generally consisted by two parts: 
 
 * Bearing: one mainly about soil bearings on berries including farm chemical bearings like fungicide, herbicide, etc. and fertilizer bearings including nitrogen, potash, etc.
 * Market: one contains market related data about berries including price, yield, acre, etc.
@@ -42,7 +44,7 @@ summary(b_berry)
 
 Now, we start to separate the whole data set into two tables bearing and market as mentioned above by detecting whether 'BEARING' occurred in Data.Item. 
 
-Then in exploring remaining data or so called market related data, it is interesting to find 'BLUEBERRIES' from Maine State are labeled with WILD while others are all 'TAME'. This may caused by 'the wild blueberry, sometimes called the low-bush blueberry, is native to Maine and thrives in its glacier-churned soil and challenging seasons.' However, for convenience, we will only label it in a new TAME column by 1 or 0 and ingore it in further analysis.
+Then in exploring remaining data or so called market related data, it is interesting to find 'BLUEBERRIES' from Maine State are labeled with WILD while others are all 'TAME'. This may caused by 'the wild blueberry, sometimes called the low-bush blueberry, is native to Maine and thrives in its glacier-churned soil and challenging seasons.' [<sup>2</sup>](#refer-anchor-2) However, for convenience, we will only label it in a new TAME column by 1 or 0 and ingore it in further analysis.
 
 ```{R "Separate 'b_berry' into two tables"}
 #write.csv(b_berry,'b_berry.csv',row.names=F)
@@ -165,43 +167,91 @@ write.csv(b_berry_market,"Berries-shiny/b_berry_market.csv",row.names=F)
 ```
 
 # 3 EDA for 'bearing'
+
+EDA for 'bearing', especially for the chemical parts of bearing is extremely hard for a normal person since we do not have so much understanding of various farm chemicals. However, we can still analyze parts of them like total FUNGICIDE, HERBICIDE, INSECTICIDE, Others and total NITROGEN, PHOSPHATE, POTASH, SULFUR. Here we just use Principal Component Analysis (PCA) to analyze their relationships. Since the FERRTILIZER data only collected in 2015 and 2019, we will choose these two years only. Besides, for missing value, we use mean value to replace.
+
 ```{r}
+# load data
 bearing=read.csv('Berries-data/b_berry_bearing.csv')
-head(bearing)
-bearing_value=filter(bearing,Unit=='LB')
-unique(bearing_value$Domain)
+bearing_value=filter(bearing,
+                     Year%in%c('2019','2015'),
+                     Unit=='LB',
+                     Category%in%c('(NITROGEN)','(PHOSPHATE)','(POTASH)',
+                                   '(SULFUR)','(TOTAL)')
+                     )
+# arrange data
+bearing_value$DC=paste(bearing_value$Domain,bearing_value$Category)
+bearing_value=select(bearing_value,DC,Value)
+bearing_value=arrange(bearing_value,bearing_value[,1])
+# handle missing value
+for(i in unique(bearing_value$DC)){
+  m=bearing_value$Value[bearing_value$Value!=' (D)'
+                        &bearing_value$DC==i]%>%
+    str_replace_all(c(','=''))%>%
+    as.numeric()%>%
+    mean()
+  bearing_value$Value[bearing_value$Value==' (D)'
+                    &bearing_value$DC==i]=m
 
-name_category=NA
-j=1
-for (i in unique(bearing_value$Category)) {
-  nrow_category=nrow(filter(bearing_value,Category==i)
-                        )
-  if (nrow_category>=16){
-    name_category[j]=i
-    j=j+1
-  }
 }
-
-miss_data=NA
-x=filter(bearing_value,Category%in%name_category)
-
+# transform to numeric
+bearing_value$Value=as.numeric(str_replace_all(bearing_value$Value,c(','='')))
+# transform for PCA
+j=1
+for(i in unique(bearing_value$DC)){
+  if(j==1)bearing_pca=bearing_value$Value[bearing_value$DC==i]
+  else bearing_pca=cbind(bearing_pca,bearing_value$Value[bearing_value$DC==i])
+  j=0
+}
+colnames(bearing_pca)=unique(bearing_value$DC)
+head(bearing_pca)
 ```
+
+After getting the data, we use prcomp function for PCA and summary its components, cumulative proportion and plot [<sup>3</sup>](#refer-anchor-3) as follow:
 
 ```{r}
-(b_domain=unique(bearing$Domain))
-unique(filter(bearing,Domain==b_domain[1])$Year)
-unique(filter(bearing,Domain==b_domain[2])$Year)
-unique(filter(bearing,Domain==b_domain[3])$Year)
-unique(filter(bearing,Domain==b_domain[4])$Year)
-unique(filter(bearing,Domain==b_domain[5])$Year)
+pca=prcomp(bearing_pca,center = T,scale. = T)
+summary(pca)
+print(pca)
 ```
+```{r}
+devtools::install_github("vqv/ggbiplot")
+ggbiplot::ggscreeplot(pca) 
+```
+
+As we can see, the first 4 principal component is important. Considering there is only 8 initial variables, PCA is not so help in regression.
+
 # 4 EDA for 'market'
+
+The EDA for 'market' table is much easier. The relationships between different variables are extremly clear. We can use an example of California in 2019 to illustrate these:
+
 ```{R}
 market=read.csv('Berries-data/b_berry_market.csv')
-market=filter(market,Measurement!='NOT HARVESTED - PRODUCTION')
-index_measure=data.frame(No=1:nrow(unique(select(market,Measurement,Unit))),
-                         unique(select(market,Measurement,Unit)))
+market_value=filter(market,
+                    Year=='2019',
+                    State=='CALIFORNIA')
+market_value=select(market_value,-Commodity,-TAME)
+market_value=arrange(market_value,market_value[,3])
+(market_value=data.frame(No.=1:nrow(market_value),market_value))
 ```
 
+So, here there are 6 equations to explain there relationships:
+
+* PRODUCTION_(LB) = YIELD_(LB/ACRE) * ACRES_HARVESTED_(ACRE)
+* 
+
+
 # 5 Create Shiny
+
+Then, we create a shiny app to display the data we get. The app [Berries-shiny](https://haoshen.shinyapps.io/Berries-shiny/) has been deployed on shinyapps.io. And the code is listed in [app.R](Berries-shiny/app.R).
+
 # 6 Create Slide
+Finally we create a slide [Berries-slide](Berries-slide.pdf) to summary our whole EDA process. The code of slide is in [Berries-slide.Rmd](Berries-slide.Rmd).
+
+# 7 Reference
+<div id="refer-anchor-1"></div>
+[1] [National Agricultural Statistics Service](https://quickstats.nass.usda.gov/)
+<div id="refer-anchor-2"></div>
+[2] [Visit Maine](https://visitmaine.com/things-to-do/agricultural-attractions/wild-for-blueberries)
+<div id="refer-anchor-3"></div>
+[3] [Vince Vu](https://github.com/vqv/ggbiplot)
