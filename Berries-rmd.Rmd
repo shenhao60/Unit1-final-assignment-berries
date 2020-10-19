@@ -221,9 +221,6 @@ After getting the data, we use prcomp function for PCA and summary its component
 pca=prcomp(bearing_pca,center = T,scale. = T)
 summary(pca)
 print(pca)
-```
-```{r}
-devtools::install_github("vqv/ggbiplot")
 ggbiplot::ggscreeplot(pca) 
 ```
 
@@ -264,9 +261,11 @@ So, here there are 13 equations to explain there relationships:
 Then, we create a shiny app to display the data we get. The app [Berries-shiny](https://haoshen.shinyapps.io/Berries-shiny/) has been deployed on shinyapps.io. And the code is listed in [app.R](Berries-shiny/app.R).
 
 # 6 Create Slide
+
 Finally we create a slide [Berries-slide](Berries-slide.pdf) to summary our whole EDA process. The code of slide is in [Berries-slide.Rmd](Berries-slide.Rmd).
 
 # 7 Reference
+
 <div id="refer-anchor-1"></div>
 [1] [National Agricultural Statistics Service](https://quickstats.nass.usda.gov/)
 <div id="refer-anchor-2"></div>
