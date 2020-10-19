@@ -240,7 +240,7 @@ market_value=arrange(market_value,market_value[,3])
 (market_value=data.frame(No.=1:nrow(market_value),market_value))
 ```
 
-So, here there are 13 equations to explain there relationships:
+So, here we conclude 13 equations to explain there relationships:
 
 *   Row1    =   Row10   /   Row13
 *   Row2    =   Row3    /   Row4
