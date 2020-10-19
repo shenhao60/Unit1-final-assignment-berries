@@ -16,10 +16,15 @@ library(tidyverse)
 
 After initially rough observation of the berries data set downloaded from USDA, we can find it generally consisted by two parts: 
 
-* one mainly about soil bearing on berries including farm chemical bearings like fungicide, herbicide, etc. and fertilizer bearings including nitrogeon, potash, etc.
-* 
+* Bearing: one mainly about soil bearings on berries including farm chemical bearings like fungicide, herbicide, etc. and fertilizer bearings including nitrogen, potash, etc.
+* Market: one contains market related data about berries including price, yield, acre, etc.
+
+So, we believe the whole data sets should be separated into two part and analyzed respectively. Here we just use data of 'BLUEBERRIES' for example.
 
 ## 2.1 Select columns with useful information
+
+First, we load data from local disk and filter those lines related to 'BLUBERRIES'. Then we drop some columns for the information they contained is either meaningless or replicated, and get a data frame of 7,597 observations with 7 variables summarized as follow:
+
 ```{R "Column Selection"}
 berries=read.csv('Berries-data/berries.csv')
 b_berry=filter(berries,Commodity=='BLUEBERRIES')
@@ -28,20 +33,34 @@ b_berry=select(b_berry,
                -(Period:Geo.Level),
                -(State.ANSI:Watershed),
                -CV....)
+summary(b_berry)
 ```
 
 ## 2.2 Separate 'b_berry' into two tables
+
+Now, we start to separate the whole data set into two tables bearing and market as mentioned above by detecting whether 'BEARING' occurred in Data.Item. 
+
+Then in exploring remaining data or so called market related data, it is interesting to find 'BLUEBERRIES' from Maine State are labeled with WILD while others are all 'TAME'. This may caused by 'the wild blueberry, sometimes called the low-bush blueberry, is native to Maine and thrives in its glacier-churned soil and challenging seasons.' However, for convenience, we will only label it in a new TAME column by 1 or 0 and ingore it in further analysis.
+
 ```{R "Separate 'b_berry' into two tables"}
 #write.csv(b_berry,'b_berry.csv',row.names=F)
 #unique(b_berry$Data.Item)
 b_berry_bearing=b_berry[str_detect(b_berry$Data.Item,'BEARING'),]
-b_berry_market=b_berry[str_detect(b_berry$Data.Item,'TAME')|
-                         str_detect(b_berry$Data.Item,'WILD'),]
+b_berry_market=b_berry[!str_detect(b_berry$Data.Item,'BEARING'),]
 b_berry_market$TAME[str_detect(b_berry_market$Data.Item,'TAME')]=1
 b_berry_market$TAME[str_detect(b_berry_market$Data.Item,'WILD')]=0
 ```
 
 ## 2.3 Create sub-table 'b_berry_bearing'
+
+Here we come into the most complicated part to separate Data.Item, for each of them includes at least 3 parts of information with only 1 string:
+
+* Commodity: a part contains the same information of Commodity column which can be deleted directly.
+* Measurement: a part denote the measurement used to generate Values. It can be either 'TREATED' or 'APPLICATION'.
+* Unit: a part denote the unit of Values. For observations with 'APPLICATION', units include LB, LB/ACRE/APPLICATION, etc. For observations with 'TREATED', unit only include percentage.
+
+Since both comma and space contained in strings and varies from observation to observation, it is hard to use normal separator link ',' and ' '. And we believe it can be solved by plugging our own separator '#' into the right places, and just split strings by these new separators.
+
 ```{R "Separate 'Data.Item' of 'Bearing'"}
 #unique(b_berry_bearing$Data.Item)
 b_berry_bearing$Data.Item=str_replace_all(b_berry_bearing$Data.Item,
@@ -49,6 +68,8 @@ b_berry_bearing$Data.Item=str_replace_all(b_berry_bearing$Data.Item,
                                             ', MEASURED IN '='#'))
 b_berry_bearing=separate(b_berry_bearing,Data.Item,c('Measurement','Unit'),'#')
 ```
+
+After separation of Data.Item, we notice that observations with 'CHEMICAL' Domain included are different from those with 'FERTILIZER' in both Domain and Domain.Category columns. 
 
 ```{R "Separate 'b_berry_bearing' into two tables"}
 #unique(b_berry_bearing$Domain)
