@@ -189,8 +189,8 @@ bearing_value=filter(bearing,
                      )
 # arrange data
 bearing_value$DC=paste(bearing_value$Domain,bearing_value$Category)
-bearing_value=select(bearing_value,DC,Value)
-bearing_value=arrange(bearing_value,bearing_value[,1])
+bearing_value=arrange(bearing_value,bearing_value$Year,bearing_value$State,
+                      bearing_value$DC)
 # handle missing value
 for(i in unique(bearing_value$DC)){
   m=bearing_value$Value[bearing_value$Value!=' (D)'
