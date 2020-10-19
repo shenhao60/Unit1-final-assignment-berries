@@ -10,13 +10,18 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 ```
 
-# Summary
+# 1 Summary
 
-# Data cleaning
+# 2 Data cleaning
 
-## Select columns with useful information
+After initially rough observation of the berries data set downloaded from USDA, we can find it generally consisted by two parts: 
+
+* one mainly about soil bearing on berries including farm chemical bearings like fungicide, herbicide, etc. and fertilizer bearings including nitrogeon, potash, etc.
+* 
+
+## 2.1 Select columns with useful information
 ```{R "Column Selection"}
-berries=read.csv('berries.csv')
+berries=read.csv('Berries-data/berries.csv')
 b_berry=filter(berries,Commodity=='BLUEBERRIES')
 b_berry=select(b_berry,
                -Program,
@@ -25,7 +30,7 @@ b_berry=select(b_berry,
                -CV....)
 ```
 
-## Separate 'b_berry' into two tables
+## 2.2 Separate 'b_berry' into two tables
 ```{R "Separate 'b_berry' into two tables"}
 #write.csv(b_berry,'b_berry.csv',row.names=F)
 #unique(b_berry$Data.Item)
@@ -36,7 +41,7 @@ b_berry_market$TAME[str_detect(b_berry_market$Data.Item,'TAME')]=1
 b_berry_market$TAME[str_detect(b_berry_market$Data.Item,'WILD')]=0
 ```
 
-## Create sub-table 'b_berry_bearing'
+## 2.3 Create sub-table 'b_berry_bearing'
 ```{R "Separate 'Data.Item' of 'Bearing'"}
 #unique(b_berry_bearing$Data.Item)
 b_berry_bearing$Data.Item=str_replace_all(b_berry_bearing$Data.Item,
@@ -53,7 +58,7 @@ b_berry_fertilizer=b_berry_bearing[
   str_detect(b_berry_bearing$Domain,'FERTILIZER'),]
 ```
 
-### Create sub-table 'b_berry_chemical'
+### 2.3.1 Create sub-table 'b_berry_chemical'
 ```{R "Separate 'Domain.Category' of 'b_berry_chemical'"}
 b_berry_chemical=select(b_berry_chemical,-Domain)
 #unique(b_berry_chemical$Domain.Category)
@@ -63,19 +68,19 @@ b_berry_chemical$Domain.Category=str_replace_all(b_berry_chemical$Domain.Categor
 b_berry_chemical=separate(b_berry_chemical,Domain.Category,c('Domain','Category'),'#')
 ```
 
-### Create sub-table 'b_berry_fertilizer'
+### 2.3.2 Create sub-table 'b_berry_fertilizer'
 ```{R "Separate 'Domain.Category' of 'b_berry_fertilizer'"}
 b_berry_fertilizer=select(b_berry_fertilizer,-Domain)
 #unique(b_berry_fertilizer$Domain.Category)
 b_berry_fertilizer=separate(b_berry_fertilizer,Domain.Category,c('Domain','Category'),': ')
 ```
 
-### Form new 'b_berry_bearing'
+### 2.3.3 Form new 'b_berry_bearing'
 ```{R "Form new 'b_berry_bearing'"}
 b_berry_bearing=rbind(b_berry_chemical,b_berry_fertilizer)
 ```
 
-## Create sub-table 'b_berry_market'
+## 2.4Create sub-table 'b_berry_market'
 ```{R "Separate 'Data.Item' of 'b_berry_market'"}
 b_berry_market=select(b_berry_market,-Domain,-Domain.Category)
 #unique(b_berry_market$Data.Item)
@@ -91,19 +96,39 @@ b_berry_market=separate(b_berry_market,Data.Item,c('Measurement','Unit'),'#')
 b_berry_market$Unit[is.na(b_berry_market$Unit)]='ACRE'
 ```
 
-## Remove useless b_berries and save data
+## 2.5 Remove useless b_berries and save data
 ```{R "Remove useless b_berries"}
 rm(b_berry_fertilizer,b_berry_chemical)
-write.csv(b_berry_bearing,"Shiny/b_berry_bearing.csv",row.names=F)
-write.csv(b_berry_market,"Shiny/b_berry_market.csv",row.names=F)
+#for EDA & Slide
+write.csv(b_berry_bearing,"Berries-data/b_berry_bearing.csv",row.names=F)
+write.csv(b_berry_market,"Berries-data/b_berry_market.csv",row.names=F)
+#for Shiny
+write.csv(b_berry_bearing,"Berries-shiny/b_berry_bearing.csv",row.names=F)
+write.csv(b_berry_market,"Berries-shiny/b_berry_market.csv",row.names=F)
+
 ```
 
-# EDA for 'bearing'
+# 3 EDA for 'bearing'
 ```{r}
-bearing=read.csv('b_berry_bearing.csv')
-market=read.csv('b_berry_market.csv')
+bearing=read.csv('Berries-data/b_berry_bearing.csv')
 head(bearing)
-bearing_value=filter(bearing,Value!=' (NA)'&Value!=' (D)')
+bearing_value=filter(bearing,Unit=='LB')
+unique(bearing_value$Domain)
+
+name_category=NA
+j=1
+for (i in unique(bearing_value$Category)) {
+  nrow_category=nrow(filter(bearing_value,Category==i)
+                        )
+  if (nrow_category>=16){
+    name_category[j]=i
+    j=j+1
+  }
+}
+
+miss_data=NA
+x=filter(bearing_value,Category%in%name_category)
+
 ```
 
 ```{r}
@@ -114,9 +139,13 @@ unique(filter(bearing,Domain==b_domain[3])$Year)
 unique(filter(bearing,Domain==b_domain[4])$Year)
 unique(filter(bearing,Domain==b_domain[5])$Year)
 ```
-# EDA for 'market'
+# 4 EDA for 'market'
 ```{R}
+market=read.csv('Berries-data/b_berry_market.csv')
 market=filter(market,Measurement!='NOT HARVESTED - PRODUCTION')
 index_measure=data.frame(No=1:nrow(unique(select(market,Measurement,Unit))),
                          unique(select(market,Measurement,Unit)))
 ```
+
+# 5 Create Shiny
+# 6 Create Slide

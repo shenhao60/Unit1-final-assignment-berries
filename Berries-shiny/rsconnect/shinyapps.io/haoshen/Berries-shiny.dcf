@@ -1,0 +1,12 @@
+name: Berries-shiny
+title: Berries-shiny
+username:
+account: haoshen
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3045566
+bundleId: 3756665
+url: https://haoshen.shinyapps.io/Berries-shiny/
+when: 1603080514.35761
+asMultiple: FALSE
+asStatic: FALSE
