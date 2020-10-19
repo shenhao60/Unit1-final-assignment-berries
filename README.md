@@ -3,7 +3,7 @@ In this assignment, we do EAD for data set berries from USDA. In data cleaning p
 * Bearing: a part contains information about farm chemical and fertilizer usage on berries.
 * Market: a part with price, yield, area related information about berries.
 
-For Bearing part, we use principal component analysis to explore variables' internal relationship and the results shows the PCA will not help a lot in regression.
+For Bearing part, we use principal component analysis to explore variables' internal relationship and the results shows the PCA needs 4 principal components.
 
 For Market part, since the relationships between variables are extremely simple, we summarize 13 equations to explain their connections.
 
