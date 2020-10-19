@@ -385,36 +385,62 @@ summary {
 <h1>2 Data cleaning</h1>
 <p>After initially rough observation of the berries data set downloaded from USDA, we can find it generally consisted by two parts:</p>
 <ul>
-<li>one mainly about soil bearing on berries including farm chemical bearings like fungicide, herbicide, etc. and fertilizer bearings including nitrogeon, potash, etc.</li>
-<li></li>
+<li>Bearing: one mainly about soil bearings on berries including farm chemical bearings like fungicide, herbicide, etc. and fertilizer bearings including nitrogen, potash, etc.</li>
+<li>Market: one contains market related data about berries including price, yield, acre, etc.</li>
 </ul>
+<p>So, we believe the whole data sets should be separated into two part and analyzed respectively. Here we just use data of ‘BLUEBERRIES’ for example.</p>
 <div id="select-columns-with-useful-information" class="section level2">
 <h2>2.1 Select columns with useful information</h2>
+<p>First, we load data from local disk and filter those lines related to ‘BLUBERRIES’. Then we drop some columns for the information they contained is either meaningless or replicated, and get a data frame of 7,597 observations with 7 variables summarized as follow:</p>
 <pre class="r"><code>berries=read.csv(&#39;Berries-data/berries.csv&#39;)
 b_berry=filter(berries,Commodity==&#39;BLUEBERRIES&#39;)
 b_berry=select(b_berry,
                -Program,
                -(Period:Geo.Level),
                -(State.ANSI:Watershed),
-               -CV....)</code></pre>
+               -CV....)
+summary(b_berry)</code></pre>
+<pre><code>##       Year         State            Commodity          Data.Item        
+##  Min.   :2015   Length:7597        Length:7597        Length:7597       
+##  1st Qu.:2015   Class :character   Class :character   Class :character  
+##  Median :2017   Mode  :character   Mode  :character   Mode  :character  
+##  Mean   :2017                                                           
+##  3rd Qu.:2019                                                           
+##  Max.   :2019                                                           
+##     Domain          Domain.Category       Value          
+##  Length:7597        Length:7597        Length:7597       
+##  Class :character   Class :character   Class :character  
+##  Mode  :character   Mode  :character   Mode  :character  
+##                                                          
+##                                                          
+## </code></pre>
 </div>
 <div id="separate-b_berry-into-two-tables" class="section level2">
 <h2>2.2 Separate ‘b_berry’ into two tables</h2>
+<p>Now, we start to separate the whole data set into two tables bearing and market as mentioned above by detecting whether ‘BEARING’ occurred in Data.Item.</p>
+<p>Then in exploring remaining data or so called market related data, it is interesting to find ‘BLUEBERRIES’ from Maine State are labeled with WILD while others are all ‘TAME’. This may caused by ‘the wild blueberry, sometimes called the low-bush blueberry, is native to Maine and thrives in its glacier-churned soil and challenging seasons.’ However, for convenience, we will only label it in a new TAME column by 1 or 0 and ingore it in further analysis.</p>
 <pre class="r"><code>#write.csv(b_berry,&#39;b_berry.csv&#39;,row.names=F)
 #unique(b_berry$Data.Item)
 b_berry_bearing=b_berry[str_detect(b_berry$Data.Item,&#39;BEARING&#39;),]
-b_berry_market=b_berry[str_detect(b_berry$Data.Item,&#39;TAME&#39;)|
-                         str_detect(b_berry$Data.Item,&#39;WILD&#39;),]
+b_berry_market=b_berry[!str_detect(b_berry$Data.Item,&#39;BEARING&#39;),]
 b_berry_market$TAME[str_detect(b_berry_market$Data.Item,&#39;TAME&#39;)]=1
 b_berry_market$TAME[str_detect(b_berry_market$Data.Item,&#39;WILD&#39;)]=0</code></pre>
 </div>
 <div id="create-sub-table-b_berry_bearing" class="section level2">
 <h2>2.3 Create sub-table ‘b_berry_bearing’</h2>
+<p>Here we come into the most complicated part to separate Data.Item, for each of them includes at least 3 parts of information with only 1 string like ‘BLUEBERRIES, BEARING - APPLICATIONS, MEASURED IN LB’</p>
+<ul>
+<li>Commodity=‘BLUEBERRIES’: a part contains the same information of Commodity column which can be deleted directly.</li>
+<li>Measurement=‘BEARING - APPLICATIONS’: a part denote the measurement used to generate Values. It can be either ‘TREATED’ or ‘APPLICATION’.</li>
+<li>Unit=‘MEASURED IN LB’: a part denote the unit of Values. For observations with ‘APPLICATION’, units include LB, LB/ACRE/APPLICATION, etc. For observations with ‘TREATED’, unit only include percentage.</li>
+</ul>
+<p>Since both comma and space contained in strings and varies from observation to observation, it is hard to use normal separator link ‘,’ and ’ ‘. And we believe it can be solved by plugging our own separator’#’ into the right places, and just split strings by these new separators.</p>
 <pre class="r"><code>#unique(b_berry_bearing$Data.Item)
 b_berry_bearing$Data.Item=str_replace_all(b_berry_bearing$Data.Item,
                                           c(&#39;BLUEBERRIES, BEARING - &#39;=&#39;&#39;,
                                             &#39;, MEASURED IN &#39;=&#39;#&#39;))
 b_berry_bearing=separate(b_berry_bearing,Data.Item,c(&#39;Measurement&#39;,&#39;Unit&#39;),&#39;#&#39;)</code></pre>
+<p>After separation of Data.Item, we notice that observations with ‘CHEMICAL’ Domain included are different from those with ‘FERTILIZER’ in both Domain and Domain.Category columns. Therefore in next steps we need to separate the whole bearing table into two sub-tables and handle their data respectively.</p>
 <pre class="r"><code>#unique(b_berry_bearing$Domain)
 b_berry_chemical=b_berry_bearing[
   str_detect(b_berry_bearing$Domain,&#39;CHEMICAL&#39;),]
@@ -422,6 +448,12 @@ b_berry_fertilizer=b_berry_bearing[
   str_detect(b_berry_bearing$Domain,&#39;FERTILIZER&#39;),]</code></pre>
 <div id="create-sub-table-b_berry_chemical" class="section level3">
 <h3>2.3.1 Create sub-table ‘b_berry_chemical’</h3>
+<p>For sub-table with ‘CHEMICAL’ Domain, it has a Domain.Category like ‘CHEMICAL, INSECTICIDE: (PHOSMET = 59201)’, which contains two parts:</p>
+<ul>
+<li>Domain=‘CHEMICAL, INSECTICIDE’: more specific information than Domain about chemical types.</li>
+<li>Category=‘(PHOSMET = 59201)’’: a part with information of chemical components.</li>
+</ul>
+<p>So, we decide to just delete original Domain column and separate the Domain.Category into two part, Domain and Category columns to gain contain more information with just 2 columns.</p>
 <pre class="r"><code>b_berry_chemical=select(b_berry_chemical,-Domain)
 #unique(b_berry_chemical$Domain.Category)
 b_berry_chemical$Domain.Category=str_replace_all(b_berry_chemical$Domain.Category,
@@ -431,17 +463,54 @@ b_berry_chemical=separate(b_berry_chemical,Domain.Category,c(&#39;Domain&#39;,&#
 </div>
 <div id="create-sub-table-b_berry_fertilizer" class="section level3">
 <h3>2.3.2 Create sub-table ‘b_berry_fertilizer’</h3>
+<p>For sub-table with ‘FERTILIZER’ Domain, its Domain.Category is like ‘FERTILIZER: (SULFUR)’ which also has two parts:</p>
+<ul>
+<li>Domain=‘FERTILIZER’: a part contains the same information as Domain column.</li>
+<li>Category=‘(SULFUR)’’: a part with information of chemical components.</li>
+</ul>
+<p>So, we can also delete original Domain column and separate the Domain.Category into two parts.</p>
 <pre class="r"><code>b_berry_fertilizer=select(b_berry_fertilizer,-Domain)
 #unique(b_berry_fertilizer$Domain.Category)
 b_berry_fertilizer=separate(b_berry_fertilizer,Domain.Category,c(&#39;Domain&#39;,&#39;Category&#39;),&#39;: &#39;)</code></pre>
 </div>
 <div id="form-new-b_berry_bearing" class="section level3">
 <h3>2.3.3 Form new ‘b_berry_bearing’</h3>
-<pre class="r"><code>b_berry_bearing=rbind(b_berry_chemical,b_berry_fertilizer)</code></pre>
+<p>Now, we can combind these two sub-tables to form the new bearing table. It displayed and summaried as follow:</p>
+<pre class="r"><code>b_berry_bearing=rbind(b_berry_chemical,b_berry_fertilizer)
+head(b_berry_bearing)</code></pre>
+<pre><code>##    Year   State   Commodity  Measurement Unit    Domain
+## 50 2019 GEORGIA BLUEBERRIES APPLICATIONS   LB FUNGICIDE
+## 51 2019 GEORGIA BLUEBERRIES APPLICATIONS   LB FUNGICIDE
+## 52 2019 GEORGIA BLUEBERRIES APPLICATIONS   LB FUNGICIDE
+## 53 2019 GEORGIA BLUEBERRIES APPLICATIONS   LB FUNGICIDE
+## 54 2019 GEORGIA BLUEBERRIES APPLICATIONS   LB FUNGICIDE
+## 55 2019 GEORGIA BLUEBERRIES APPLICATIONS   LB FUNGICIDE
+##                                            Category  Value
+## 50                          (AZOXYSTROBIN = 128810)  1,800
+## 51 (BACILLUS AMYLOLIQUEFACIENS STRAIN D747 = 16482)   (NA)
+## 52                       (BACILLUS SUBTILIS = 6479)   (NA)
+## 53                      (BORAX DECAHYDRATE = 11102)    (D)
+## 54                              (BOSCALID = 128008)  2,300
+## 55                    (CALCIUM POLYSULFIDE = 76702) 20,200</code></pre>
+<pre class="r"><code>summary(b_berry_bearing)</code></pre>
+<pre><code>##       Year         State            Commodity         Measurement       
+##  Min.   :2015   Length:6834        Length:6834        Length:6834       
+##  1st Qu.:2015   Class :character   Class :character   Class :character  
+##  Median :2017   Mode  :character   Mode  :character   Mode  :character  
+##  Mean   :2017                                                           
+##  3rd Qu.:2019                                                           
+##  Max.   :2019                                                           
+##      Unit              Domain            Category            Value          
+##  Length:6834        Length:6834        Length:6834        Length:6834       
+##  Class :character   Class :character   Class :character   Class :character  
+##  Mode  :character   Mode  :character   Mode  :character   Mode  :character  
+##                                                                             
+##                                                                             
+## </code></pre>
 </div>
 </div>
 <div id="create-sub-table-b_berry_market" class="section level2">
-<h2>2.4Create sub-table ‘b_berry_market’</h2>
+<h2>2.4Create sub-table ’b_berry_market</h2>
 <pre class="r"><code>b_berry_market=select(b_berry_market,-Domain,-Domain.Category)
 #unique(b_berry_market$Data.Item)
 b_berry_market$Data.Item=str_replace_all(b_berry_market$Data.Item,

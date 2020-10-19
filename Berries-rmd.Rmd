@@ -12,6 +12,8 @@ library(tidyverse)
 
 # 1 Summary
 
+
+
 # 2 Data cleaning
 
 After initially rough observation of the berries data set downloaded from USDA, we can find it generally consisted by two parts: 
@@ -51,13 +53,13 @@ b_berry_market$TAME[str_detect(b_berry_market$Data.Item,'TAME')]=1
 b_berry_market$TAME[str_detect(b_berry_market$Data.Item,'WILD')]=0
 ```
 
-## 2.3 Create sub-table 'b_berry_bearing'
+## 2.3 Create table1 'b_berry_bearing'
 
-Here we come into the most complicated part to separate Data.Item, for each of them includes at least 3 parts of information with only 1 string:
+Here we come into the most complicated part to separate Data.Item, for each of them includes at least 3 parts of information with only 1 string like 'BLUEBERRIES, BEARING - APPLICATIONS, MEASURED IN LB'
 
-* Commodity: a part contains the same information of Commodity column which can be deleted directly.
-* Measurement: a part denote the measurement used to generate Values. It can be either 'TREATED' or 'APPLICATION'.
-* Unit: a part denote the unit of Values. For observations with 'APPLICATION', units include LB, LB/ACRE/APPLICATION, etc. For observations with 'TREATED', unit only include percentage.
+* Commodity='BLUEBERRIES': a part contains the same information of Commodity column which can be deleted directly.
+* Measurement='BEARING - APPLICATIONS': a part denote the measurement used to generate Values. It can be either 'TREATED' or 'APPLICATION'.
+* Unit='MEASURED IN LB': a part denote the unit of Values. For observations with 'APPLICATION', units include LB, LB/ACRE/APPLICATION, etc. For observations with 'TREATED', unit only include percentage.
 
 Since both comma and space contained in strings and varies from observation to observation, it is hard to use normal separator link ',' and ' '. And we believe it can be solved by plugging our own separator '#' into the right places, and just split strings by these new separators.
 
@@ -69,7 +71,7 @@ b_berry_bearing$Data.Item=str_replace_all(b_berry_bearing$Data.Item,
 b_berry_bearing=separate(b_berry_bearing,Data.Item,c('Measurement','Unit'),'#')
 ```
 
-After separation of Data.Item, we notice that observations with 'CHEMICAL' Domain included are different from those with 'FERTILIZER' in both Domain and Domain.Category columns. 
+After separation of Data.Item, we notice that observations with 'CHEMICAL' Domain included are different from those with 'FERTILIZER' in both Domain and Domain.Category columns. Therefore in next steps we need to separate the whole bearing table into two sub-tables and handle their data respectively. 
 
 ```{R "Separate 'b_berry_bearing' into two tables"}
 #unique(b_berry_bearing$Domain)
@@ -80,6 +82,14 @@ b_berry_fertilizer=b_berry_bearing[
 ```
 
 ### 2.3.1 Create sub-table 'b_berry_chemical'
+
+For sub-table with 'CHEMICAL' Domain, it has a Domain.Category like 'CHEMICAL, INSECTICIDE: (PHOSMET = 59201)', which contains two parts:
+
+* Domain='CHEMICAL, INSECTICIDE': more specific information than Domain about chemical types.
+* Category='(PHOSMET = 59201)'': a part with information of chemical components.
+
+So, we decide to just delete original Domain column and separate the Domain.Category into two part, Domain and Category columns to gain contain more information with just 2 columns.
+
 ```{R "Separate 'Domain.Category' of 'b_berry_chemical'"}
 b_berry_chemical=select(b_berry_chemical,-Domain)
 #unique(b_berry_chemical$Domain.Category)
@@ -90,18 +100,38 @@ b_berry_chemical=separate(b_berry_chemical,Domain.Category,c('Domain','Category'
 ```
 
 ### 2.3.2 Create sub-table 'b_berry_fertilizer'
+
+For sub-table with 'FERTILIZER' Domain, its Domain.Category is like 'FERTILIZER: (SULFUR)' which also has two parts:
+
+* Domain='FERTILIZER': a part contains the same information as Domain column.
+* Category='(SULFUR)'': a part with information of chemical components.
+
+So, we can also delete original Domain column and separate the Domain.Category into two parts.
+
 ```{R "Separate 'Domain.Category' of 'b_berry_fertilizer'"}
 b_berry_fertilizer=select(b_berry_fertilizer,-Domain)
 #unique(b_berry_fertilizer$Domain.Category)
 b_berry_fertilizer=separate(b_berry_fertilizer,Domain.Category,c('Domain','Category'),': ')
 ```
 
-### 2.3.3 Form new 'b_berry_bearing'
+### 2.3.3 Form new table1 'b_berry_bearing'
+
+Now, we can combine these two sub-tables to form the new bearing table. It is displayed and summarized as follow:
+
 ```{R "Form new 'b_berry_bearing'"}
 b_berry_bearing=rbind(b_berry_chemical,b_berry_fertilizer)
+head(b_berry_bearing)
+summary(b_berry_bearing)
 ```
 
-## 2.4Create sub-table 'b_berry_market'
+## 2.4Create table2 'b_berry_market'
+
+Basically, the creation of table2 'b_berry_market' is the same as the creation of table1, with just a little changes in handling Data.Item column.
+
+Here the most rows of Data.Item column have the same format of table1 'b_berry_chemical', consisted by Commodity, Measurement and Unit. But for some rows with Data.Item equal contains 'ACRES HARVESTED', it only have two parts of information, Commodity and Measurement. But it is early to handle, since if we separate them as others, the new Unit column will be filled by NA, which can be easily replaced by its real unit 'ACRE'.
+
+After cleaning, it is displayed and summarized as follow:
+
 ```{R "Separate 'Data.Item' of 'b_berry_market'"}
 b_berry_market=select(b_berry_market,-Domain,-Domain.Category)
 #unique(b_berry_market$Data.Item)
@@ -115,9 +145,14 @@ b_berry_market$Data.Item=str_replace_all(b_berry_market$Data.Item,
 b_berry_market=separate(b_berry_market,Data.Item,c('Measurement','Unit'),'#')
 #b_berry_market[is.na(b_berry_market$Unit),]
 b_berry_market$Unit[is.na(b_berry_market$Unit)]='ACRE'
+head(b_berry_market)
+summary(b_berry_market)
 ```
 
 ## 2.5 Remove useless b_berries and save data
+
+We finally get two data sets of bearings and market after all above processes and we need to save them at two place: one in Berries-data folder for further EDA and Slide making, one in Berries-shiny for Shiny app to deploy.
+
 ```{R "Remove useless b_berries"}
 rm(b_berry_fertilizer,b_berry_chemical)
 #for EDA & Slide
