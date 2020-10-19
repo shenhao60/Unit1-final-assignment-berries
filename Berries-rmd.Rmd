@@ -172,7 +172,6 @@ write.csv(b_berry_market,"Berries-data/b_berry_market.csv",row.names=F)
 #for Shiny
 write.csv(b_berry_bearing,"Berries-shiny/b_berry_bearing.csv",row.names=F)
 write.csv(b_berry_market,"Berries-shiny/b_berry_market.csv",row.names=F)
-
 ```
 
 # 3 EDA for 'bearing'
@@ -242,7 +241,6 @@ market_value=filter(market,
 market_value=select(market_value,-Commodity,-TAME)
 market_value=arrange(market_value,market_value[,3])
 (market_value=data.frame(No.=1:nrow(market_value),market_value))
-write.csv(market_value,'1.csv')
 ```
 
 So, here there are 13 equations to explain there relationships:
