@@ -3,35 +3,27 @@ title: "Unit1 Final Assignment Berries"
 author: "Hao Shen"
 date: "2020/10/19"
 output:
-  slidy_presentation: default
+  beamer_presentation: default
   ioslides_presentation: default
+  slidy_presentation: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-## R Markdown
+## Summary
 
-This is an R Markdown presentation. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+In this assignment, we do EAD for data set berries from USDA. After data cleaning and according to data set attributions, we divided the whole berries date set into two parts:
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+* Bearing: contains information about farm chemical usage.
+* Market: with price, yield, area related information.
 
-## Slide with Bullets
+Besides, we deploy a shiny app [Berries-shiny](https://haoshen.shinyapps.io/Berries-shiny/) for data display and the document recorded the whole processes is in [Berries-rmd](Berries-rmd.pdf).
 
-- Bullet 1
-- Bullet 2
-- Bullet 3
+## Data Cleaning
 
-## Slide with R Output
+The main problems in 
 
-```{r cars, echo = TRUE}
-summary(cars)
-```
 
-## Slide with Plot
-
-```{r pressure}
-plot(pressure)
-```
 

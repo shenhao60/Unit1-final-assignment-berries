@@ -7,4 +7,4 @@ For Bearing part, we use principal component analysis to explore variables' inte
 
 For Market part, since the relationships between variables are extremely simple, we summarize 13 equations to explain their connections.
 
-Besides, we deploy a shiny app [Berries-shiny](https://haoshen.shinyapps.io/Berries-shiny/) for data display and a slide [Berries-slide](Berries-slide.pdf) to presente the results. And the document recored the whole processes is in [Berries-rmd](Berries-rmd.pdf).
+Besides, we deploy a shiny app [Berries-shiny](https://haoshen.shinyapps.io/Berries-shiny/) for data display and a slide [Berries-slide](Berries-slide.pdf) to present the results. And the document recorded the whole processes is in [Berries-rmd](Berries-rmd.pdf).
